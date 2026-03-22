@@ -11,12 +11,12 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      const res = await axios.post('http://localhost:5005/api/auth/login', { email, password });
       if (res.data.success) {
         // Store token for protected routes
         localStorage.setItem('advocateToken', res.data.token);
         localStorage.setItem('advocateName', res.data.user.fullName);
-        navigate('/');
+        navigate('/Dashboard');
       }
     } catch (err) {
       alert(err.response?.data?.message || "Login Failed");
@@ -45,7 +45,7 @@ export default function Login() {
             Sign In <ArrowRight size={18} />
           </button>
           <p className="text-center text-sm">
-            Need access? <Link to="/register" className="text-blue-600 font-bold">Register</Link>
+            Need access? <Link to="/register" className="text-blue-600 font-bold">Request Access?</Link>
           </p>
         </form>
       </div>
