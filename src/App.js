@@ -67,6 +67,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import AppointmentsPage from './pages/Appointments'; // The page we created in the last step
 import DocumentCenter from './pages/DocumentCenter';
+import VerifyClient from './pages/VerifyClient';
+import ProfileCard from './pages/ProfileCard';
 
 export default function App() {
   return (
@@ -75,6 +77,8 @@ export default function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/appointments" element={<AppointmentsPage />} />
         <Route path="/documents" element={<DocumentCenter />} />
+        <Route path="/verify" element={<VerifyClient />} />
+        <Route path="/profile" element={<ProfileCard />} />
         {/* You can add more routes here later, like /documents */}
       </Routes>
     </Router>
