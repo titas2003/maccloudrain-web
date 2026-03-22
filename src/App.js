@@ -28,7 +28,7 @@
 
 //       {/* The Exact Grid from Image */}
 //       <div className="grid grid-cols-12 gap-6">
-        
+
 //         {/* ROW 1 */}
 //         <div className="col-span-12 lg:col-span-7">
 //           <UpcomingAppointments />
@@ -69,12 +69,16 @@ import AppointmentsPage from './pages/Appointments'; // The page we created in t
 import DocumentCenter from './pages/DocumentCenter';
 import VerifyClient from './pages/VerifyClient';
 import ProfileCard from './pages/ProfileCard';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/Dashboard" element={<Dashboard />} />
+        <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/appointments" element={<AppointmentsPage />} />
         <Route path="/documents" element={<DocumentCenter />} />
         <Route path="/verify" element={<VerifyClient />} />
