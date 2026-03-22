@@ -6,7 +6,7 @@ export default function Sidebar({ isOpen, toggleMenu }) {
   const location = useLocation(); // This tells us which page is currently active
 
   const menuItems = [
-    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/' },
+    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/Dashboard' },
     { name: 'Appointments', icon: <Calendar size={20} />, path: '/appointments' },
     { name: 'Document Center', icon: <FileText size={20} />, path: '/documents' },
     { name: 'Verify Client', icon: <ShieldCheck size={20} />, path: '/verify' },
