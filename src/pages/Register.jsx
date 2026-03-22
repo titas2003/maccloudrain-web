@@ -1,65 +1,68 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { Shield, User, Mail, Lock, Briefcase } from 'lucide-react';
 
 export default function Register() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    fullName: '',
+    barId: '',
+    email: '',
+    password: ''
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post('http://localhost:5000/api/auth/register', formData);
+      if (res.data.success) {
+        alert("Registration Successful!");
+        navigate('/login');
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || "Registration Failed");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
       <div className="max-w-2xl w-full bg-white rounded-3xl shadow-xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 overflow-hidden">
-        
-        {/* Branding Side */}
         <div className="bg-[#1a2b4b] p-10 flex flex-col justify-between text-white">
-          <div>
-            <Shield size={40} className="mb-6" />
-            <h2 className="text-3xl font-black leading-tight">Join the Elite Legal Network.</h2>
-            <p className="mt-4 text-blue-200 text-sm leading-relaxed">
-              Streamline your practice, manage cases, and verify clients with our end-to-end encrypted platform.
-            </p>
-          </div>
-          <div className="text-xs opacity-40 font-bold uppercase tracking-widest">
-            © 2026 Advocated Systems
-          </div>
+          <Shield size={40} className="mb-6" />
+          <h2 className="text-3xl font-black leading-tight">Join the Elite Legal Network.</h2>
+          <p className="mt-4 text-blue-200 text-sm">Professional end-to-end encrypted platform.</p>
+          <div className="text-xs opacity-40 font-bold tracking-widest uppercase">© 2026 Advocated</div>
         </div>
 
-        {/* Form Side */}
         <div className="p-10">
           <h3 className="text-xl font-bold text-slate-800 mb-6">Create Account</h3>
-          <form className="space-y-4">
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">Full Name</label>
-              <div className="relative">
-                <User className="absolute left-3 top-2.5 text-slate-300" size={16} />
-                <input type="text" className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-400" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">Bar Association ID</label>
-              <div className="relative">
-                <Briefcase className="absolute left-3 top-2.5 text-slate-300" size={16} />
-                <input type="text" className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-400" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">Work Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-2.5 text-slate-300" size={16} />
-                <input type="email" className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-400" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-2.5 text-slate-300" size={16} />
-                <input type="password" className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-400" />
-              </div>
-            </div>
-
-            <button className="w-full bg-[#1a2b4b] text-white py-3 rounded-lg font-bold text-sm mt-4 hover:bg-[#25395f] transition-all">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input 
+              type="text" placeholder="Full Name" required
+              className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+              onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+            />
+            <input 
+              type="text" placeholder="Bar Association ID" required
+              className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+              onChange={(e) => setFormData({...formData, barId: e.target.value})}
+            />
+            <input 
+              type="email" placeholder="Work Email" required
+              className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
+            />
+            <input 
+              type="password" placeholder="Password" required
+              className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm"
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
+            />
+            <button className="w-full bg-[#1a2b4b] text-white py-3 rounded-lg font-bold text-sm mt-4 hover:bg-[#25395f]">
               Register Firm
             </button>
-
-            <p className="text-center text-xs text-slate-500 mt-4">
-              Already have an account? <Link to="/" className="text-blue-600 font-bold hover:underline">Log In</Link>
+            <p className="text-center text-xs mt-4">
+              Already have an account? <Link to="/login" className="text-blue-600 font-bold">Log In</Link>
             </p>
           </form>
         </div>
