@@ -1,29 +1,29 @@
+import React from 'react';
+import { ShieldCheck, UserPlus, CheckCircle2 } from 'lucide-react';
+
 export default function ClientVerifier() {
   return (
-    <div className="bg-white rounded-xl p-6 border border-slate-100 shadow-sm h-full">
-      <h3 className="font-bold text-slate-800 mb-4">Validate Client Authenticity</h3>
-      <div className="flex gap-2 mb-6">
-        <div className="relative flex-1">
-          <span className="absolute left-3 top-2.5 text-slate-400">🔍</span>
-          <input type="text" placeholder="Search client name..." className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none" />
+    <div className="bg-[#1a2b4b] p-6 rounded-2xl text-white shadow-xl relative overflow-hidden">
+      {/* Decorative Background Element */}
+      <ShieldCheck className="absolute -right-4 -bottom-4 text-white/5 w-32 h-32" />
+
+      <div className="relative z-10">
+        <h3 className="text-lg font-bold flex items-center gap-2 mb-2">
+          <ShieldCheck size={20} className="text-blue-400" />
+          Client KYC Verifier
+        </h3>
+        <p className="text-blue-200 text-xs mb-6 leading-relaxed">
+          Verify client identity instantly via Bar Association secure link before sharing sensitive documents.
+        </p>
+
+        <div className="flex gap-3">
+          <button className="flex-1 bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2">
+            <UserPlus size={16} /> New Verification
+          </button>
+          <button className="px-4 bg-white/10 hover:bg-white/20 py-3 rounded-xl font-bold text-xs transition-all">
+            History
+          </button>
         </div>
-        <button className="bg-[#1a2b4b] text-white px-6 py-2 rounded-lg text-xs font-bold whitespace-nowrap">Validate Clients</button>
-      </div>
-      <div className="space-y-4">
-        <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase border-b pb-2">
-          <span>Name</span><span>Status</span>
-        </div>
-        {[1, 2].map(i => (
-          <div key={i} className="flex justify-between items-center text-sm border-b border-slate-50 pb-3 last:border-0">
-            <span className="font-medium text-slate-700">Maya Sharma {i}</span>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400">Validated</span>
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] text-white ${i === 1 ? 'bg-green-500' : 'bg-red-400'}`}>
-                {i === 1 ? '✓' : '×'}
-              </div>
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );

@@ -1,35 +1,36 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Megaphone, ToggleLeft, ToggleRight, Eye } from 'lucide-react';
 
 export default function AdvertisingProfile() {
+  const [isLive, setIsLive] = useState(true);
+
   return (
-    <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm h-full">
-      <h3 className="font-bold text-slate-800 mb-4">Advertising & Profile</h3>
-      
-      {/* The Navy Blue Preview Card */}
-      <div className="bg-[#1a2b4b] text-white p-4 rounded-xl flex items-center justify-between mb-6 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-slate-400 rounded-full border-2 border-white/20" />
-          <div>
-            <p className="font-bold text-sm">Maya Sharma</p>
-            <p className="text-[10px] opacity-70">Advocate Card</p>
-          </div>
+    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <Megaphone size={18} className="text-purple-600" />
+          <h3 className="font-bold text-slate-800 text-sm">Profile Visibility</h3>
         </div>
-        <button className="text-[10px] border border-white/30 px-3 py-1 rounded-md hover:bg-white/10 transition-colors">
-          Preview
+        <button onClick={() => setIsLive(!isLive)} className="transition-colors">
+          {isLive ? <ToggleRight size={32} className="text-green-500" /> : <ToggleLeft size={32} className="text-slate-300" />}
         </button>
       </div>
 
-      {/* Stats Row */}
-      <div className="flex gap-12 px-2">
-        <div>
-          <p className="text-xl font-bold text-slate-800">3,27K</p>
-          <p className="text-[10px] text-slate-400 uppercase font-semibold">Total Views</p>
+      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] font-black text-slate-400 uppercase">Search Status</span>
+          <span className={`text-[10px] font-bold ${isLive ? 'text-green-600' : 'text-slate-400'}`}>
+            {isLive ? 'VISIBLE IN CITY' : 'HIDDEN'}
+          </span>
         </div>
-        <div>
-          <p className="text-xl font-bold text-slate-800">1,778</p>
-          <p className="text-[10px] text-slate-400 uppercase font-semibold">Profile Clicks</p>
+        <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+          <div className={`h-full transition-all duration-500 ${isLive ? 'w-full bg-green-500' : 'w-0'}`}></div>
         </div>
       </div>
+
+      <button className="w-full flex items-center justify-center gap-2 py-3 border-2 border-slate-100 hover:border-blue-100 hover:bg-blue-50 rounded-xl text-xs font-bold text-slate-600 transition-all">
+        <Eye size={16} /> Preview Public Card
+      </button>
     </div>
   );
 }
