@@ -2,7 +2,8 @@ import React from 'react';
 import Layout from '../components/Layout';
 import AppointmentList from '../components/AppointmentList';
 import ScheduleGrid from '../components/ScheduleGrid';
-import { Clock } from 'lucide-react'; // Added this line
+import { Clock } from 'lucide-react'; 
+import CalendarSync from '../components/CalendarSync';
 
 export default function AppointmentsPage() {
   return (
@@ -26,15 +27,12 @@ export default function AppointmentsPage() {
             </h3>
             <ScheduleGrid />
           </div>
-          
-          <div className="bg-[#1a2b4b] p-6 rounded-xl text-white shadow-lg">
-            <h4 className="font-bold mb-2">Sync Calendar</h4>
-            <p className="text-xs opacity-70 mb-4">Connect with Google or Outlook to avoid double bookings.</p>
-            <button className="w-full bg-white/10 hover:bg-white/20 border border-white/30 py-2 rounded-lg text-sm font-bold transition-all">
-              Connect Now
-            </button>
-          </div>
         </div>
+      </div>
+
+      {/* Sync View Section at the bottom */}
+      <div className="mt-8 pb-10">
+        <CalendarSync />
       </div>
     </Layout>
   );
