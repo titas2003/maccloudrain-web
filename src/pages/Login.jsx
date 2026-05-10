@@ -7,7 +7,7 @@ import { Shield, ArrowRight, Loader2 } from 'lucide-react';
 export default function Login() {
   const navigate = useNavigate();
   const queryClient = useQueryClient(); // Initialize Query Client
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,9 +19,9 @@ export default function Login() {
     setError('');
 
     try {
-      const res = await axios.post('http://localhost:5005/api/auth/login', { 
-        email, 
-        password 
+      const res = await axios.post('http://localhost:5006/api/auth/login', {
+        email,
+        password
       });
 
       if (res.data.success) {
@@ -31,10 +31,10 @@ export default function Login() {
         // 2. Persistent Storage
         localStorage.setItem('advocateToken', res.data.token);
         localStorage.setItem('advocateName', res.data.user.fullName);
-        
+
         // 3. Set global axios header for this session
         axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
-        
+
         // 4. Redirect to Dashboard
         navigate('/dashboard');
       }
@@ -49,7 +49,7 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
-        
+
         <div className="bg-[#1a2b4b] p-8 text-center text-white">
           <Shield className="mx-auto mb-4" size={32} />
           <h2 className="text-2xl font-black uppercase tracking-tight">Advocated</h2>
@@ -66,9 +66,9 @@ export default function Login() {
           <div className="space-y-4">
             <div>
               <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Work Email</label>
-              <input 
-                type="email" 
-                placeholder="advocate@firm.com" 
+              <input
+                type="email"
+                placeholder="advocate@firm.com"
                 required
                 value={email}
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none transition-all"
@@ -78,9 +78,9 @@ export default function Login() {
 
             <div>
               <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Security Password</label>
-              <input 
-                type="password" 
-                placeholder="••••••••" 
+              <input
+                type="password"
+                placeholder="••••••••"
                 required
                 value={password}
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none transition-all"
@@ -89,7 +89,7 @@ export default function Login() {
             </div>
           </div>
 
-          <button 
+          <button
             type="submit"
             disabled={loading}
             className="w-full bg-[#1a2b4b] text-white py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#25395f] active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
