@@ -105,7 +105,7 @@ export default function Register() {
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-400 uppercase ml-1">Full Name</label>
                 <input
-                  type="text" placeholder="e.g. Labani Sardar" required
+                  type="text" placeholder="e.g. John Doe" required
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -114,7 +114,7 @@ export default function Register() {
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-400 uppercase ml-1">Email Address</label>
                 <input
-                  type="email" placeholder="mail@example.com" required
+                  type="email" placeholder="john@example.com" required
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -127,7 +127,7 @@ export default function Register() {
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-400 uppercase ml-1">Phone Number</label>
                 <input
-                  type="tel" placeholder="e.g. 8240148512" required
+                  type="tel" placeholder="e.g. 987456xxxx" required
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
