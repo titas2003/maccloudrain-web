@@ -19,8 +19,9 @@ export default function Login() {
     setError('');
 
     try {
-      const res = await axios.post('http://localhost:5006/api/auth/login', {
-        email,
+      // Updated payload to match API requirement (identifier instead of email)
+      const res = await axios.post('http://localhost:5006/api/advocate/login', {
+        identifier: email,
         password
       });
 
@@ -28,9 +29,10 @@ export default function Login() {
         // 1. Clear any old cached data from previous sessions
         queryClient.clear();
 
-        // 2. Persistent Storage
+        // 2. Persistent Storage (Updated to match the new API response structure)
         localStorage.setItem('advocateToken', res.data.token);
-        localStorage.setItem('advocateName', res.data.user.fullName);
+        localStorage.setItem('advocateName', res.data.data.name);
+        localStorage.setItem('advocateId', res.data.data.advId); // Storing the Advocate ID for future use
 
         // 3. Set global axios header for this session
         axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
