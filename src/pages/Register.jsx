@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Shield, Loader2, MapPin, Briefcase } from 'lucide-react';
+import { Shield, Loader2, Landmark, Briefcase } from 'lucide-react';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -9,15 +9,16 @@ export default function Register() {
   const [categories, setCategories] = useState([]);
   const [fetchingCategories, setFetchingCategories] = useState(true);
 
+  // Updated state to match the exact signup API payload
   const [formData, setFormData] = useState({
-    fullName: '',
-    barId: '',
+    name: '',
     email: '',
+    phone: '',
+    state: '',
     password: '',
-    city: '',
-    area: '',
-    specialization: '', // Will now store the category _id
-    experienceYears: ''
+    courtDivision: '',
+    specialization: '',
+    yearsOfExperience: ''
   });
 
   // Fetch categories on component mount
@@ -41,11 +42,23 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    // Ensure yearsOfExperience is a number
+    const payload = {
+      ...formData,
+      yearsOfExperience: Number(formData.yearsOfExperience)
+    };
+
     try {
-      const res = await axios.post('http://localhost:5006/api/auth/register', formData);
+      const res = await axios.post('http://localhost:5006/api/advocate/signup', payload);
+
       if (res.data.success) {
-        alert("Registration Successful! Please log in.");
-        navigate('/');
+        // Store the JWT token for authentication
+        localStorage.setItem('authToken', res.data.token);
+
+        // Show success message with the newly generated Advocate ID
+        alert(`Registration Successful! Welcome, your Advocate ID is ${res.data.data.advId}`);
+        navigate('/'); // Redirect to dashboard or login
       }
     } catch (err) {
       alert(err.response?.data?.message || "Registration Failed");
@@ -54,9 +67,13 @@ export default function Register() {
     }
   };
 
-  // Separate parent courts from child specializations for grouping
+  // Separate parent courts from child specializations
   const parentCategories = categories.filter(cat => cat.parent === null);
-  const childCategories = categories.filter(cat => cat.parent !== null);
+
+  // Dynamically filter specializations based on the selected Court Division
+  const availableSpecializations = categories.filter(
+    cat => cat.parent === formData.courtDivision
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
@@ -79,7 +96,7 @@ export default function Register() {
         {/* Form Area */}
         <div className="p-8 md:p-12 md:col-span-2">
           <h3 className="text-2xl font-bold text-slate-800 mb-2">Create Professional Account</h3>
-          <p className="text-slate-500 text-sm mb-8">Please fill in your bar details and location.</p>
+          <p className="text-slate-500 text-sm mb-8">Please fill in your details to register.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -88,100 +105,116 @@ export default function Register() {
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-400 uppercase ml-1">Full Name</label>
                 <input
-                  type="text" placeholder="Adv. John Doe" required
+                  type="text" placeholder="e.g. Labani Sardar" required
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none"
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase ml-1">Bar ID</label>
+                <label className="text-xs font-bold text-slate-400 uppercase ml-1">Email Address</label>
                 <input
-                  type="text" placeholder="BAR-12345-2024" required
+                  type="email" placeholder="mail@example.com" required
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none"
-                  onChange={(e) => setFormData({ ...formData, barId: e.target.value })}
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
               </div>
             </div>
 
-            {/* Row 2: Contact Info */}
+            {/* Row 2: Contact & Location */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase ml-1">Email Address</label>
+                <label className="text-xs font-bold text-slate-400 uppercase ml-1">Phone Number</label>
                 <input
-                  type="email" placeholder="work@firm.com" required
+                  type="tel" placeholder="e.g. 8240148512" required
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none"
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 />
               </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase ml-1">State</label>
+                <input
+                  type="text" placeholder="e.g. Karnataka" required
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none"
+                  value={formData.state}
+                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* Row 3: Password & Experience */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-400 uppercase ml-1">Password</label>
                 <input
                   type="password" placeholder="••••••••" required
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none"
+                  value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
               </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase ml-1">Exp. (Years)</label>
+                <input
+                  type="number" min="0" placeholder="e.g. 3" required
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none"
+                  value={formData.yearsOfExperience}
+                  onChange={(e) => setFormData({ ...formData, yearsOfExperience: e.target.value })}
+                />
+              </div>
             </div>
 
-            {/* Row 3: Location */}
+            {/* Row 4: Professional Legal Details */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1">
-                  <MapPin size={12} /> City
+                  <Landmark size={12} /> Court Division
                 </label>
-                <input
-                  type="text" placeholder="e.g. Kolkata" required
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none"
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                />
+                <select
+                  required
+                  disabled={fetchingCategories}
+                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none appearance-none disabled:opacity-50"
+                  value={formData.courtDivision}
+                  onChange={(e) => {
+                    // When court division changes, reset the specialization
+                    setFormData({
+                      ...formData,
+                      courtDivision: e.target.value,
+                      specialization: ''
+                    });
+                  }}
+                >
+                  <option value="">{fetchingCategories ? "Loading..." : "Select Court"}</option>
+                  {parentCategories.map(parent => (
+                    <option key={parent._id} value={parent._id}>
+                      {parent.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1">
-                  <MapPin size={12} /> Area / Locality
-                </label>
-                <input
-                  type="text" placeholder="e.g. Salt Lake" required
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none"
-                  onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                />
-              </div>
-            </div>
 
-            {/* Row 4: Professional */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-400 uppercase ml-1 flex items-center gap-1">
                   <Briefcase size={12} /> Specialization
                 </label>
                 <select
                   required
-                  disabled={fetchingCategories}
+                  disabled={fetchingCategories || !formData.courtDivision}
                   className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none appearance-none disabled:opacity-50"
+                  value={formData.specialization}
                   onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
                 >
-                  <option value="">{fetchingCategories ? "Loading categories..." : "Select Field"}</option>
-
-                  {/* Group options by their parent Court */}
-                  {parentCategories.map(parent => (
-                    <optgroup key={parent._id} label={parent.name}>
-                      {childCategories
-                        .filter(child => child.parent === parent._id)
-                        .map(child => (
-                          <option key={child._id} value={child._id}>
-                            {child.name}
-                          </option>
-                        ))}
-                    </optgroup>
+                  <option value="">
+                    {!formData.courtDivision ? "Select Court First" : "Select Field"}
+                  </option>
+                  {availableSpecializations.map(child => (
+                    <option key={child._id} value={child._id}>
+                      {child.name}
+                    </option>
                   ))}
                 </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase ml-1">Exp. (Years)</label>
-                <input
-                  type="number" placeholder="e.g. 5" required
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none"
-                  onChange={(e) => setFormData({ ...formData, experienceYears: e.target.value })}
-                />
               </div>
             </div>
 
