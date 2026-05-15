@@ -67,10 +67,10 @@ export default function Login() {
 
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Work Email</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Your Email/Advocacy ID</label>
               <input
-                type="email"
-                placeholder="advocate@firm.com"
+                type="text"
+                placeholder="Enter Your Email/Advocacy ID"
                 required
                 value={email}
                 className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none transition-all"
