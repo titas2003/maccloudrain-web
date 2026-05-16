@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import UpcomingAppointments from '../components/UpcomingAppointments';
+import AppointmentRequests from '../components/AppointmentRequests';
 import { Bell, ChevronDown, Clock, LogOut, CheckCircle, Loader2, UploadCloud, AlertCircle, Eye } from 'lucide-react';
 
 export default function Dashboard() {
@@ -411,13 +412,31 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* --- MAIN DASHBOARD GRID --- */}
         <div className="grid grid-cols-12 gap-6 pb-10">
+
+          {/* ROW 1: Action Items (Requests) */}
+          <div className="col-span-12 lg:col-span-7">
+            <AppointmentRequests />
+          </div>
+
+          {/* ROW 1: Settings Placeholder (e.g., Fee Settings, Profile Stats) */}
+          <div className="col-span-12 lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-center items-center text-center">
+            <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle size={24} />
+            </div>
+            <h3 className="font-bold text-slate-800">Profile Active</h3>
+            <p className="text-xs text-slate-500 mt-2 max-w-xs">Manage your availability and fees from the settings menu to start accepting more clients.</p>
+          </div>
+
+          {/* ROW 2: Confirmed Appointments */}
           <div className="col-span-12">
             <UpcomingAppointments
               appointments={upcomingAppointments}
               isLoading={isAppointmentsLoading}
             />
           </div>
+
         </div>
       </Layout>
     </>
