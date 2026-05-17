@@ -1,144 +1,169 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { Loader2, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-
-const timeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "01:00 PM", "02:00 PM", "03:00 PM"];
+import { Loader2, Plus, Trash2, Calendar, Clock, AlertCircle } from 'lucide-react';
 
 export default function ScheduleGrid() {
   const queryClient = useQueryClient();
-  const [selectedSlots, setSelectedSlots] = useState([]);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [formData, setFormData] = useState({
+    date: '',
+    startTime: '',
+    endTime: '',
+    recurrence: 'none',
+    recurrenceEnd: ''
+  });
 
-  // 1. FETCH existing availability from the backend
-  // We use the 'advocateProfile' key to keep everything in sync
-  const { data: profileData, isLoading: isFetching, isError: fetchError } = useQuery({
-    queryKey: ['advocateProfile'],
+  const { data: slots, isLoading: isFetching, isError } = useQuery({
+    queryKey: ['advocateSlots'],
     queryFn: async () => {
       const token = localStorage.getItem('advocateToken');
-      const res = await axios.get('http://localhost:5005/api/advocates/me', {
+      const res = await axios.get('http://localhost:5006/api/advocate/availability?status=available', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      return res.data.data; 
-    },
-    // Only fetch if we have a token
-    enabled: !!localStorage.getItem('advocateToken'),
+      return res.data.data;
+    }
   });
 
-  // 2. SYNC local state when data arrives from the server
-  // This ensures that "8:00 AM" (or any slot) stays selected after a refresh
-  useEffect(() => {
-    if (profileData?.schedules) {
-      const savedTimes = profileData.schedules.map(s => s.startTime);
-      setSelectedSlots(savedTimes);
-    }
-  }, [profileData]);
-
-  // 3. UPDATE mutation to save changes
-  const mutation = useMutation({
-    mutationFn: (schedules) => {
+  const addMutation = useMutation({
+    mutationFn: async (data) => {
       const token = localStorage.getItem('advocateToken');
-      return axios.post('http://localhost:5005/api/availability', 
-        { schedules },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      return axios.post('http://localhost:5006/api/advocate/availability', data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
     },
     onSuccess: () => {
-      // Refresh the profile data so the UI is 100% accurate
-      queryClient.invalidateQueries(['advocateProfile']);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
+      queryClient.invalidateQueries(['advocateSlots']);
+      setFormData({
+        date: '',
+        startTime: '',
+        endTime: '',
+        recurrence: 'none',
+        recurrenceEnd: ''
+      });
+    },
+    onError: (err) => {
+      alert(err.response?.data?.message || 'Failed to add availability');
     }
   });
 
-  const toggleSlot = (time) => {
-    setSelectedSlots(prev => 
-      prev.includes(time) ? prev.filter(t => t !== time) : [...prev, time]
-    );
-  };
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      const token = localStorage.getItem('advocateToken');
+      return axios.delete(`http://localhost:5006/api/advocate/availability/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['advocateSlots']);
+    },
+    onError: (err) => {
+      alert(err.response?.data?.message || 'Failed to delete slot');
+    }
+  });
 
-  const handleUpdate = () => {
-    // Map the simple string array to the object format the Backend expects
-    const formattedSchedules = selectedSlots.map(slot => ({
-      dayOfWeek: "Monday", // Logic can be expanded to dynamic days later
-      startTime: slot,
-      endTime: slot, 
-      isActive: true
-    }));
-    mutation.mutate(formattedSchedules);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    addMutation.mutate(formData);
   };
-
-  // Loading State
-  if (isFetching) {
-    return (
-      <div className="bg-white p-8 rounded-2xl border border-slate-200 flex flex-col items-center justify-center min-h-[250px]">
-        <Loader2 className="animate-spin text-blue-600 mb-3" size={28} />
-        <p className="text-sm text-slate-500 font-semibold tracking-tight">Syncing your schedule...</p>
-      </div>
-    );
-  }
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2 text-[#1a2b4b]">
-          <Clock size={18} className="text-blue-600" />
-          <h3 className="font-bold tracking-tight">Set Your Availability</h3>
-        </div>
-        <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-1 rounded-lg font-black uppercase tracking-wider">
-          Live
-        </span>
-      </div>
-      
-      <p className="text-[11px] text-slate-500 mb-6 leading-relaxed">
-        Select the specific hours you are available for consultations. Changes reflect instantly on your public profile.
+    <div className="space-y-6">
+      <p className="text-[11px] text-slate-500 leading-relaxed mb-4">
+        Set the specific hours you are available for consultations. 
       </p>
-      
-      {/* Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {timeSlots.map(time => {
-          const isSelected = selectedSlots.includes(time);
-          return (
-            <button
-              key={time}
-              type="button"
-              onClick={() => toggleSlot(time)}
-              disabled={mutation.isPending}
-              className={`p-3 rounded-xl border text-xs font-bold transition-all duration-200 ${
-                isSelected 
-                ? 'bg-[#1a2b4b] text-white border-[#1a2b4b] shadow-lg scale-[1.02]' 
-                : 'bg-slate-50 text-slate-600 border-slate-100 hover:border-blue-300 hover:bg-white'
-              }`}
-            >
-              {time}
-            </button>
-          );
-        })}
-      </div>
 
-      {/* Action Button */}
-      <button 
-        onClick={handleUpdate}
-        disabled={mutation.isPending}
-        className="w-full mt-6 bg-blue-600 text-white py-3.5 rounded-xl font-bold text-sm hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-md disabled:opacity-50 disabled:grayscale"
-      >
-        {mutation.isPending ? (
-          <Loader2 className="animate-spin" size={18} />
-        ) : showSuccess ? (
-          <><CheckCircle size={18} /> Schedule Updated</>
-        ) : (
-          'Update Schedule'
-        )}
-      </button>
-
-      {/* Error Feedback */}
-      {(fetchError || mutation.isError) && (
-        <div className="mt-4 flex items-center justify-center gap-2 text-red-500">
-          <AlertCircle size={14} />
-          <p className="text-[10px] font-bold">Server connection error</p>
+      {/* ADD FORM */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Date</label>
+          <input type="date" required className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
         </div>
-      )}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Start Time</label>
+            <input type="time" required className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">End Time</label>
+            <input type="time" required className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} />
+          </div>
+        </div>
+        <div>
+          <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Recurrence</label>
+          <select className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            value={formData.recurrence} onChange={e => setFormData({...formData, recurrence: e.target.value})}>
+            <option value="none">None (One time)</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+        {formData.recurrence !== 'none' && (
+          <div>
+            <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Recur Until</label>
+            <input type="date" required className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              value={formData.recurrenceEnd} onChange={e => setFormData({...formData, recurrenceEnd: e.target.value})} />
+          </div>
+        )}
+        <button 
+          type="submit" 
+          disabled={addMutation.isPending} 
+          className="w-full py-3.5 rounded-xl font-bold text-sm bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-70"
+        >
+          {addMutation.isPending ? <Loader2 className="animate-spin" size={16}/> : <><Plus size={16}/> Add Availability</>}
+        </button>
+      </form>
+
+      {/* EXISTING SLOTS LIST */}
+      <div className="pt-6 border-t border-slate-100">
+        <h4 className="text-xs font-bold text-slate-800 mb-3 uppercase tracking-wider flex items-center gap-2">
+          <Calendar size={14} className="text-blue-500" /> Your Active Slots
+        </h4>
+        
+        {isFetching ? (
+          <div className="flex justify-center py-6"><Loader2 className="animate-spin text-blue-500" size={24}/></div>
+        ) : isError ? (
+          <div className="flex items-center justify-center gap-2 text-red-500 py-4">
+            <AlertCircle size={16} />
+            <span className="text-xs font-bold">Failed to load slots</span>
+          </div>
+        ) : slots && slots.length > 0 ? (
+          <div className="space-y-2 max-h-64 overflow-y-auto pr-1 stylish-scrollbar">
+            {slots.map(slot => (
+              <div key={slot._id} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100 group hover:border-red-100 hover:bg-red-50/20 transition-colors">
+                <div>
+                  <p className="text-xs font-bold text-slate-700">
+                    {new Date(slot.date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
+                  <p className="text-[10px] text-slate-500 font-semibold flex items-center gap-1 mt-0.5">
+                    <Clock size={10} /> {slot.startTime} - {slot.endTime}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => deleteMutation.mutate(slot._id)}
+                  disabled={deleteMutation.isPending}
+                  className="text-slate-400 hover:text-red-500 bg-white hover:bg-red-50 border border-slate-200 hover:border-red-200 p-2 rounded-lg transition-all active:scale-95"
+                  title="Remove Slot"
+                >
+                  {deleteMutation.isPending && deleteMutation.variables === slot._id ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={14} />
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-slate-50 rounded-xl p-6 text-center border border-slate-100">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No Active Slots</p>
+            <p className="text-[10px] text-slate-500 mt-1">Use the form above to add slots.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
