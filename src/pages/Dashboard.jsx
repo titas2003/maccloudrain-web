@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import UpcomingAppointments from '../components/UpcomingAppointments';
 import AppointmentRequests from '../components/AppointmentRequests';
-import { Bell, ChevronDown, Clock, LogOut, CheckCircle, Loader2, UploadCloud, AlertCircle, Eye } from 'lucide-react';
+import { Bell, ChevronDown, Clock, LogOut, CheckCircle, Loader2, UploadCloud, AlertCircle, Eye, Calendar, XCircle, IndianRupee } from 'lucide-react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -27,6 +27,17 @@ export default function Dashboard() {
     queryFn: async () => {
       const token = localStorage.getItem('advocateToken');
       const res = await axios.get('http://localhost:5006/api/advocate/appointments/upcoming', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return res.data.data;
+    }
+  });
+
+  const { data: stats, isLoading: isStatsLoading } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: async () => {
+      const token = localStorage.getItem('advocateToken');
+      const res = await axios.get('http://localhost:5006/api/advocate/stats', {
         headers: { Authorization: `Bearer ${token}` }
       });
       return res.data.data;
@@ -397,11 +408,16 @@ export default function Dashboard() {
             </div>
 
             <div className="flex items-center gap-3 cursor-pointer group">
-              <img
-                src={profile?.profileImage || "https://i.imgur.com/8Km9tLL.png"}
-                alt="Profile"
-                className="w-9 h-9 rounded-full object-cover border border-slate-200"
-              />
+              <div className="relative">
+                <img
+                  src={profile?.profileImage || "https://i.imgur.com/8Km9tLL.png"}
+                  alt="Profile"
+                  className="w-9 h-9 rounded-full object-cover border border-slate-200"
+                />
+                {!isProfileLoading && (
+                  <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${vStatus === 'verified' ? 'bg-green-500' : 'bg-red-500'}`} title={vStatus === 'verified' ? 'Active' : 'Action Required'}></span>
+                )}
+              </div>
               <div className="flex items-center gap-1">
                 <span className="text-sm font-semibold text-slate-700 group-hover:text-blue-600 transition-colors">
                   {profile?.name || 'Loading...'}
@@ -412,28 +428,43 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* --- STATS SUMMARY (5 Cards) --- */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+          <StatCard title="Pending Requests" value={stats?.pendingRequests} icon={<Clock size={20} className="text-orange-500" />} color="bg-orange-50" loading={isStatsLoading} />
+          <StatCard title="Unattended Scheduled" value={stats?.unattendedAppointments} icon={<Calendar size={20} className="text-blue-500" />} color="bg-blue-50" loading={isStatsLoading} />
+          <StatCard title="Rejected Requests" value={stats?.rejectedAppointments} icon={<XCircle size={20} className="text-red-500" />} color="bg-red-50" loading={isStatsLoading} />
+          <StatCard title="Total Appointments" value={stats?.totalAppointments} icon={<CheckCircle size={20} className="text-green-500" />} color="bg-green-50" loading={isStatsLoading} />
+          <StatCard title="Total Earnings" value={`₹${stats?.totalEarnings || 0}`} icon={<IndianRupee size={20} className="text-purple-500" />} color="bg-purple-50" loading={isStatsLoading} />
+        </div>
+
         {/* --- MAIN DASHBOARD GRID --- */}
         <div className="grid grid-cols-12 gap-6 pb-10">
 
           {/* ROW 1: Action Items (Requests) */}
-          <div className="col-span-12 lg:col-span-7">
-            <AppointmentRequests />
-          </div>
-
-          {/* ROW 1: Settings Placeholder (e.g., Fee Settings, Profile Stats) */}
-          <div className="col-span-12 lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-center items-center text-center">
-            <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle size={24} />
+          <div className="col-span-12 lg:col-span-6">
+            <div className="flex justify-between items-end mb-4">
+               <div>
+                 <h2 className="text-lg font-bold text-slate-800 tracking-tight">Recent Requests</h2>
+                 <p className="text-xs text-slate-500">Needs your attention</p>
+               </div>
+               <button onClick={() => navigate('/appointments')} className="text-xs font-bold text-blue-600 hover:text-blue-700">View All</button>
             </div>
-            <h3 className="font-bold text-slate-800">Profile Active</h3>
-            <p className="text-xs text-slate-500 mt-2 max-w-xs">Manage your availability and fees from the settings menu to start accepting more clients.</p>
+            <AppointmentRequests limit={2} isGlanceView={true} />
           </div>
 
-          {/* ROW 2: Confirmed Appointments */}
-          <div className="col-span-12">
+          {/* ROW 1: Confirmed Appointments */}
+          <div className="col-span-12 lg:col-span-6">
+            <div className="flex justify-between items-end mb-4">
+               <div>
+                 <h2 className="text-lg font-bold text-slate-800 tracking-tight">Upcoming Consultations</h2>
+                 <p className="text-xs text-slate-500">Your scheduled meetings</p>
+               </div>
+               <button onClick={() => navigate('/appointments')} className="text-xs font-bold text-blue-600 hover:text-blue-700">View All</button>
+            </div>
             <UpcomingAppointments
-              appointments={upcomingAppointments}
+              appointments={upcomingAppointments?.slice(0, 2)}
               isLoading={isAppointmentsLoading}
+              isGlanceView={true}
             />
           </div>
 
@@ -466,5 +497,22 @@ function SubmitButton({ status, isUpdate }) {
     >
       {status === 'loading' ? <Loader2 size={18} className="animate-spin" /> : baseLabel}
     </button>
+  );
+}
+
+// Helper component for Stats
+function StatCard({ title, value, icon, color, loading }) {
+  return (
+    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow cursor-pointer">
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${color}`}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{title}</p>
+        <h4 className="text-2xl font-black text-slate-800 mt-1">
+          {loading ? <Loader2 size={20} className="animate-spin text-slate-300" /> : (value !== undefined ? value : 0)}
+        </h4>
+      </div>
+    </div>
   );
 }

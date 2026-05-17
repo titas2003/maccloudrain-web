@@ -1,11 +1,25 @@
 import React from 'react';
 import Layout from '../components/Layout';
-import AppointmentList from '../components/AppointmentList';
+import AppointmentRequests from '../components/AppointmentRequests';
+import UpcomingAppointments from '../components/UpcomingAppointments';
 import ScheduleGrid from '../components/ScheduleGrid';
 import { Clock } from 'lucide-react'; 
 import CalendarSync from '../components/CalendarSync';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
 export default function AppointmentsPage() {
+  const { data: upcomingAppointments, isLoading: isAppointmentsLoading } = useQuery({
+    queryKey: ['upcomingAppointments'],
+    queryFn: async () => {
+      const token = localStorage.getItem('advocateToken');
+      const res = await axios.get('http://localhost:5006/api/advocate/appointments/upcoming', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return res.data.data;
+    }
+  });
+
   return (
     <Layout>
       <div className="mb-8">
@@ -15,8 +29,9 @@ export default function AppointmentsPage() {
 
       <div className="grid grid-cols-12 gap-8">
         {/* Main List Area (Left) */}
-        <div className="col-span-12 lg:col-span-8">
-          <AppointmentList />
+        <div className="col-span-12 lg:col-span-8 space-y-8">
+          <AppointmentRequests />
+          <UpcomingAppointments appointments={upcomingAppointments} isLoading={isAppointmentsLoading} />
         </div>
 
         {/* Quick Availability / Calendar Area (Right) */}

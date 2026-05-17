@@ -1,7 +1,7 @@
 import React from 'react';
 import { Clock, User, Calendar, ExternalLink, Loader2 } from 'lucide-react';
 
-export default function UpcomingAppointments({ appointments, isLoading }) {
+export default function UpcomingAppointments({ appointments, isLoading, isGlanceView = false }) {
   
   if (isLoading) {
     return (
@@ -13,16 +13,15 @@ export default function UpcomingAppointments({ appointments, isLoading }) {
   }
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200 h-full shadow-sm">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Calendar size={20} className="text-blue-600" />
-          <h3 className="font-bold text-slate-800">Upcoming Consultations</h3>
+    <div className={`bg-white p-6 rounded-2xl border border-slate-200 shadow-sm ${isGlanceView ? 'h-full' : ''}`}>
+      {!isGlanceView && (
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <Calendar size={20} className="text-blue-600" />
+            <h3 className="font-bold text-slate-800">Upcoming Consultations</h3>
+          </div>
         </div>
-        <button className="text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-1">
-          View All <ExternalLink size={12} />
-        </button>
-      </div>
+      )}
 
       <div className="space-y-4">
         {appointments && appointments.length > 0 ? (
@@ -31,19 +30,19 @@ export default function UpcomingAppointments({ appointments, isLoading }) {
               <div className="flex items-center gap-4">
                 {/* Avatar/Initial */}
                 <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-blue-600 font-bold text-sm border border-slate-200">
-                  {apt.clientId?.fullName?.charAt(0) || <User size={16}/>}
+                  {apt.clientId?.name?.charAt(0) || <User size={16}/>}
                 </div>
                 
                 <div>
                   <h4 className="text-sm font-bold text-slate-800 group-hover:text-blue-700 transition-colors">
-                    {apt.clientId?.fullName || 'Guest Client'}
+                    {apt.clientId?.name || 'Guest Client'}
                   </h4>
                   <div className="flex items-center gap-3 mt-1">
                     <span className="flex items-center gap-1 text-[10px] font-medium text-slate-500">
-                      <Clock size={12} /> {apt.startTime}
+                      <Clock size={12} /> {apt.slotId?.startTime || apt.startTime}
                     </span>
                     <span className="flex items-center gap-1 text-[10px] font-medium text-slate-500">
-                      <Calendar size={12} /> {new Date(apt.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                      <Calendar size={12} /> {(apt.slotId?.date || apt.date) ? new Date(apt.slotId?.date || apt.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : 'No Date'}
                     </span>
                   </div>
                 </div>

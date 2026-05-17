@@ -3,10 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Calendar, Clock, User, CheckCircle, XCircle, MapPin, Video, Loader2 } from 'lucide-react';
 
-export default function AppointmentRequests() {
+export default function AppointmentRequests({ limit, isGlanceView = false }) {
     const queryClient = useQueryClient();
     const [schedulingRequest, setSchedulingRequest] = useState(null);
     const [scheduleData, setScheduleData] = useState({ meetingType: 'in-person', meetingAddress: '' });
+    const [selectedClient, setSelectedClient] = useState(null);
+    const [statusModal, setStatusModal] = useState({ isOpen: false, type: '', title: '', message: '', onConfirm: null });
 
     // 1. Fetch Pending Requests
     const { data: requests, isLoading } = useQuery({
@@ -39,7 +41,7 @@ export default function AppointmentRequests() {
     const scheduleMutation = useMutation({
         mutationFn: async ({ id, data }) => {
             const token = localStorage.getItem('advocateToken');
-            return axios.patch(`http://localhost:6/api/advocate/appointments/${id}/schedule`,
+            return axios.patch(`http://localhost:5006/api/advocate/appointments/${id}/schedule`,
                 data,
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -54,9 +56,22 @@ export default function AppointmentRequests() {
 
     // Handlers
     const handleReject = (id) => {
-        if (window.confirm('Are you sure you want to decline this appointment?')) {
-            respondMutation.mutate({ id, action: 'reject' });
-        }
+        setStatusModal({
+            isOpen: true,
+            type: 'confirm-reject',
+            title: 'Decline Request',
+            message: 'Are you sure you want to decline this appointment request?',
+            onConfirm: () => {
+                setStatusModal({ isOpen: true, type: 'loading', title: 'Declining...', message: 'Please wait while we update the request.' });
+                respondMutation.mutate(
+                    { id, action: 'reject' },
+                    {
+                        onSuccess: () => setStatusModal({ isOpen: true, type: 'success', title: 'Declined', message: 'The appointment request was successfully declined.' }),
+                        onError: () => setStatusModal({ isOpen: true, type: 'error', title: 'Error', message: 'Failed to decline request. Please try again.' })
+                    }
+                );
+            }
+        });
     };
 
     const handleAcceptInitiate = (request) => {
@@ -68,14 +83,26 @@ export default function AppointmentRequests() {
         e.preventDefault();
         if (!schedulingRequest) return;
 
+        setStatusModal({ isOpen: true, type: 'loading', title: 'Scheduling Meeting...', message: 'Accepting appointment and saving your location details.' });
+
         try {
             // Step 1: Accept the request
             await respondMutation.mutateAsync({ id: schedulingRequest._id, action: 'accept' });
-            // Step 2: Schedule the meeting details
-            await scheduleMutation.mutateAsync({ id: schedulingRequest._id, data: scheduleData });
-            alert("Appointment Confirmed and Scheduled!");
+            
+            // Step 2: Prepare schedule data
+            const finalScheduleData = {
+                meetingType: scheduleData.meetingType,
+                ...(scheduleData.meetingType === 'in-person' 
+                    ? { meetingAddress: scheduleData.inputValue } 
+                    : { meetingLink: scheduleData.inputValue })
+            };
+
+            // Step 3: Schedule the meeting details
+            await scheduleMutation.mutateAsync({ id: schedulingRequest._id, data: finalScheduleData });
+            
+            setStatusModal({ isOpen: true, type: 'success', title: 'Scheduled Successfully!', message: 'The appointment has been confirmed and the client has been notified.' });
         } catch (error) {
-            alert("Failed to schedule appointment. Please try again.");
+            setStatusModal({ isOpen: true, type: 'error', title: 'Scheduling Failed', message: 'There was an error while trying to confirm the appointment. Please try again.' });
         }
     };
 
@@ -88,13 +115,15 @@ export default function AppointmentRequests() {
     }
 
     return (
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-lg font-bold text-slate-800 tracking-tight">Client Requests</h2>
-                <span className="bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1 rounded-full">
-                    {requests?.length || 0} Pending
-                </span>
-            </div>
+        <div className={`bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative ${isGlanceView ? 'h-full' : ''}`}>
+            {!isGlanceView && (
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-lg font-bold text-slate-800 tracking-tight">Client Requests</h2>
+                    <span className="bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1 rounded-full">
+                        {requests?.length || 0} Pending
+                    </span>
+                </div>
+            )}
 
             {(!requests || requests.length === 0) ? (
                 <div className="text-center py-10 text-slate-400">
@@ -103,16 +132,20 @@ export default function AppointmentRequests() {
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {requests.map((req) => (
+                    {(limit ? requests.slice(0, limit) : requests).map((req) => (
                         <div key={req._id} className="p-4 rounded-xl border border-slate-100 hover:border-blue-100 bg-slate-50 hover:bg-blue-50/30 transition-colors">
                             <div className="flex justify-between items-start flex-wrap gap-4">
 
                                 {/* Client Info */}
                                 <div>
-                                    <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                    <button 
+                                        onClick={() => setSelectedClient(req.clientId)}
+                                        className="font-bold text-slate-800 flex items-center gap-2 hover:text-blue-600 transition-colors text-left"
+                                        title="View Client Details"
+                                    >
                                         <User size={16} className="text-slate-400" />
                                         {req.clientId?.name || 'Unknown Client'}
-                                    </h3>
+                                    </button>
                                     <div className="flex items-center gap-4 mt-2 text-xs font-semibold text-slate-500">
                                         <span className="flex items-center gap-1">
                                             <Calendar size={14} />
@@ -180,10 +213,10 @@ export default function AppointmentRequests() {
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setScheduleData({ ...scheduleData, meetingType: 'virtual' })}
-                                        className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-bold transition-all ${scheduleData.meetingType === 'virtual' ? 'border-[#1a2b4b] bg-[#1a2b4b] text-white' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                                        onClick={() => setScheduleData({ ...scheduleData, meetingType: 'online' })}
+                                        className={`flex items-center justify-center gap-2 p-3 rounded-xl border text-sm font-bold transition-all ${scheduleData.meetingType === 'online' ? 'border-[#1a2b4b] bg-[#1a2b4b] text-white' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
                                     >
-                                        <Video size={16} /> Virtual
+                                        <Video size={16} /> Online
                                     </button>
                                 </div>
                             </div>
@@ -196,8 +229,8 @@ export default function AppointmentRequests() {
                                     required
                                     placeholder={scheduleData.meetingType === 'in-person' ? "e.g. Chamber No. 12, District Court..." : "https://meet.google.com/..."}
                                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1a2b4b] outline-none min-h-[80px]"
-                                    value={scheduleData.meetingAddress}
-                                    onChange={(e) => setScheduleData({ ...scheduleData, meetingAddress: e.target.value })}
+                                    value={scheduleData.inputValue || ''}
+                                    onChange={(e) => setScheduleData({ ...scheduleData, inputValue: e.target.value })}
                                 />
                             </div>
 
@@ -218,6 +251,113 @@ export default function AppointmentRequests() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* --- CLIENT DETAIL MODAL --- */}
+            {selectedClient && (
+                <div className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 relative">
+                        <button 
+                            onClick={() => setSelectedClient(null)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-full p-1 transition-colors"
+                        >
+                            <XCircle size={20} />
+                        </button>
+                        
+                        <div className="flex flex-col items-center mb-6 mt-2">
+                            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center text-xl font-black mb-3">
+                                {selectedClient.name?.charAt(0) || <User size={24} />}
+                            </div>
+                            <h3 className="text-xl font-black text-slate-800 text-center">{selectedClient.name || 'Unknown Client'}</h3>
+                            {selectedClient.clientId && <p className="text-xs font-bold text-slate-400">ID: {selectedClient.clientId}</p>}
+                        </div>
+
+                        <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Email Address</p>
+                                <p className="text-sm font-semibold text-slate-700">{selectedClient.email || 'N/A'}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase">Phone Number</p>
+                                <p className="text-sm font-semibold text-slate-700">{selectedClient.phone || 'N/A'}</p>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={() => setSelectedClient(null)}
+                            className="w-full mt-6 py-3 rounded-xl font-bold text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* --- STATUS MODAL (Success/Error/Loading/Confirm) --- */}
+            {statusModal.isOpen && (
+                <div className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 flex flex-col items-center text-center relative overflow-hidden">
+                        
+                        {/* Dynamic Icon */}
+                        {statusModal.type === 'loading' && (
+                            <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4">
+                                <Loader2 size={32} className="animate-spin" />
+                            </div>
+                        )}
+                        {statusModal.type === 'success' && (
+                            <div className="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center mb-4">
+                                <CheckCircle size={32} />
+                            </div>
+                        )}
+                        {statusModal.type === 'error' && (
+                            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+                                <XCircle size={32} />
+                            </div>
+                        )}
+                        {statusModal.type === 'confirm-reject' && (
+                            <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mb-4">
+                                <XCircle size={32} />
+                            </div>
+                        )}
+
+                        <h3 className="text-xl font-black text-slate-800 mb-2">{statusModal.title}</h3>
+                        <p className="text-sm text-slate-500 mb-6">{statusModal.message}</p>
+
+                        {/* Loading Progress Bar */}
+                        {statusModal.type === 'loading' && (
+                            <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2 overflow-hidden">
+                                <div className="bg-blue-500 h-1.5 rounded-full w-full animate-pulse"></div>
+                            </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        {statusModal.type === 'confirm-reject' && (
+                            <div className="flex gap-3 w-full">
+                                <button
+                                    onClick={() => setStatusModal({ ...statusModal, isOpen: false })}
+                                    className="flex-1 py-3 rounded-xl font-bold text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={statusModal.onConfirm}
+                                    className="flex-1 py-3 rounded-xl font-bold text-sm bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                >
+                                    Decline Request
+                                </button>
+                            </div>
+                        )}
+
+                        {(statusModal.type === 'success' || statusModal.type === 'error') && (
+                            <button
+                                onClick={() => setStatusModal({ ...statusModal, isOpen: false })}
+                                className="w-full py-3 rounded-xl font-bold text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                            >
+                                Close
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
