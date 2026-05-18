@@ -1,6 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* body {
-=======
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -13,11 +14,25 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
-<<<<<<< HEAD
-} */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+}
 
+/* THEMES */
+html[data-theme="dark"] {
+  filter: invert(90%) hue-rotate(180deg);
+}
 
+html[data-theme="solarized-dark"] {
+  filter: invert(85%) hue-rotate(160deg) sepia(40%) contrast(110%);
+}
 
+html[data-theme="bw"] {
+  filter: grayscale(100%) contrast(120%);
+}
+
+/* Ensure images and videos don't get inverted or weirdly colored in dark mode */
+html[data-theme="dark"] img,
+html[data-theme="dark"] video,
+html[data-theme="solarized-dark"] img,
+html[data-theme="solarized-dark"] video {
+  filter: invert(110%) hue-rotate(180deg); /* Reverts the inversion */
+}

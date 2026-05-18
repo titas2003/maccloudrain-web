@@ -4,6 +4,12 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+// Initialize Theme
+const savedTheme = localStorage.getItem('app-theme');
+if (savedTheme && savedTheme !== 'default') {
+  document.documentElement.setAttribute('data-theme', savedTheme);
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

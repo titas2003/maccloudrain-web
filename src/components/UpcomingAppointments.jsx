@@ -26,7 +26,17 @@ export default function UpcomingAppointments({ appointments, isLoading, isGlance
       <div className="space-y-4">
         {appointments && appointments.length > 0 ? (
           appointments.map((apt) => (
-            <div key={apt._id} className="group flex items-center justify-between p-4 rounded-xl border border-slate-50 hover:border-blue-100 hover:bg-blue-50/30 transition-all cursor-pointer">
+            <div 
+              key={apt._id} 
+              className="group flex items-center justify-between p-4 rounded-xl border border-slate-50 hover:border-blue-100 hover:bg-blue-50/30 transition-all cursor-pointer"
+              onClick={() => {
+                if (apt.meetingType === 'online' && apt.meetingLink) {
+                  window.open(apt.meetingLink, '_blank', 'noopener,noreferrer');
+                } else if (apt.meetingType === 'in-person' && apt.meetingAddress) {
+                  alert(`Meeting Address:\n${apt.meetingAddress}`);
+                }
+              }}
+            >
               <div className="flex items-center gap-4">
                 {/* Avatar/Initial */}
                 <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-blue-600 font-bold text-sm border border-slate-200">
@@ -50,13 +60,24 @@ export default function UpcomingAppointments({ appointments, isLoading, isGlance
 
               <div className="flex flex-col items-end gap-1">
                 <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                  apt.status === 'scheduled' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
+                  apt.status === 'accepted' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
                 }`}>
                   {apt.status}
                 </span>
-                <span className="text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                  Join Call →
-                </span>
+                
+                {apt.meetingType === 'online' && apt.meetingLink ? (
+                  <span className="text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                    Join Call <ExternalLink size={10} />
+                  </span>
+                ) : apt.meetingType === 'in-person' && apt.meetingAddress ? (
+                  <span className="text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                    View Address →
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-slate-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                    No Details
+                  </span>
+                )}
               </div>
             </div>
           ))

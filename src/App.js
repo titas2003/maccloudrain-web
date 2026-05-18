@@ -9,6 +9,7 @@ import AppointmentsPage from './pages/Appointments';
 import DocumentCenter from './pages/DocumentCenter';
 import VerifyClient from './pages/VerifyClient';
 import ProfileCard from './pages/ProfileCard';
+import ProfileSettings from './pages/ProfileSettings';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -74,6 +75,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <ProfileCard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/profile-settings" 
+            element={
+              <ProtectedRoute>
+                <ProfileSettings />
               </ProtectedRoute>
             } 
           />

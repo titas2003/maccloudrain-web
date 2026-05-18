@@ -31,8 +31,17 @@ export default function Login() {
 
         // 2. Persistent Storage (Updated to match the new API response structure)
         localStorage.setItem('advocateToken', res.data.token);
-        localStorage.setItem('advocateName', res.data.data.name);
+        localStorage.setItem('user', JSON.stringify(res.data.data));
         localStorage.setItem('advocateId', res.data.data.advId); // Storing the Advocate ID for future use
+
+        // Apply theme from backend
+        const userTheme = res.data.data.themePreference || 'default';
+        localStorage.setItem('app-theme', userTheme);
+        if (userTheme === 'default') {
+          document.documentElement.removeAttribute('data-theme');
+        } else {
+          document.documentElement.setAttribute('data-theme', userTheme);
+        }
 
         // 3. Set global axios header for this session
         axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
