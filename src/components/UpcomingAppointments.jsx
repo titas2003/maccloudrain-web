@@ -1,8 +1,35 @@
 import React from 'react';
-import { Clock, User, Calendar, ExternalLink, Loader2 } from 'lucide-react';
+import { Clock, User, Calendar, ExternalLink, Loader2, CheckCircle2 } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import StatusModal from './StatusModal';
+import { useState } from 'react';
 
 export default function UpcomingAppointments({ appointments, isLoading, isGlanceView = false }) {
-  
+  const queryClient = useQueryClient();
+  const [statusModal, setStatusModal] = useState({ isOpen: false, type: '', title: '', message: '', onConfirm: null });
+
+  const completeMutation = useMutation({
+    mutationFn: async (id) => {
+      const token = localStorage.getItem('advocateToken');
+      return axios.patch(`http://localhost:5006/api/advocate/appointments/${id}/complete`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['upcomingAppointments']);
+      queryClient.invalidateQueries(['advocateProfile']); // Refresh earnings
+    },
+    onError: (err) => {
+      setStatusModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: err.response?.data?.message || 'Failed to mark as completed'
+      });
+    }
+  });
+
   if (isLoading) {
     return (
       <div className="bg-white p-6 rounded-2xl border border-slate-200 h-full flex flex-col items-center justify-center min-h-[300px]">
@@ -33,7 +60,12 @@ export default function UpcomingAppointments({ appointments, isLoading, isGlance
                 if (apt.meetingType === 'online' && apt.meetingLink) {
                   window.open(apt.meetingLink, '_blank', 'noopener,noreferrer');
                 } else if (apt.meetingType === 'in-person' && apt.meetingAddress) {
-                  alert(`Meeting Address:\n${apt.meetingAddress}`);
+                  setStatusModal({
+                    isOpen: true,
+                    type: 'info',
+                    title: 'Meeting Address',
+                    message: apt.meetingAddress
+                  });
                 }
               }}
             >
@@ -73,10 +105,28 @@ export default function UpcomingAppointments({ appointments, isLoading, isGlance
                   <span className="text-[10px] text-blue-500 font-bold opacity-0 group-hover:opacity-100 transition-opacity">
                     View Address →
                   </span>
-                ) : (
-                  <span className="text-[10px] text-slate-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                    No Details
-                  </span>
+                ) : null}
+
+                {!isGlanceView && apt.status === 'accepted' && (
+                  <button
+                    disabled={completeMutation.isPending}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setStatusModal({
+                        isOpen: true,
+                        type: 'confirm',
+                        title: 'Complete Appointment',
+                        message: 'Mark this appointment as completed and collect earnings?',
+                        onConfirm: () => {
+                          setStatusModal({ ...statusModal, isOpen: false });
+                          completeMutation.mutate(apt._id);
+                        }
+                      });
+                    }}
+                    className="mt-2 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md hover:bg-green-100 transition-colors flex items-center gap-1 opacity-0 group-hover:opacity-100"
+                  >
+                    <CheckCircle2 size={12} /> Mark Completed
+                  </button>
                 )}
               </div>
             </div>
@@ -91,6 +141,15 @@ export default function UpcomingAppointments({ appointments, isLoading, isGlance
           </div>
         )}
       </div>
+
+      <StatusModal 
+        isOpen={statusModal.isOpen}
+        type={statusModal.type}
+        title={statusModal.title}
+        message={statusModal.message}
+        onConfirm={statusModal.onConfirm}
+        onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+      />
     </div>
   );
 }

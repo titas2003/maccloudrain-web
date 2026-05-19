@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Loader2, Plus, Trash2, Calendar, Clock, AlertCircle } from 'lucide-react';
+import StatusModal from './StatusModal';
 
 export default function ScheduleGrid() {
   const queryClient = useQueryClient();
@@ -12,6 +13,7 @@ export default function ScheduleGrid() {
     recurrence: 'none',
     recurrenceEnd: ''
   });
+  const [statusModal, setStatusModal] = useState({ isOpen: false, type: '', title: '', message: '' });
 
   const { data: slots, isLoading: isFetching, isError } = useQuery({
     queryKey: ['advocateSlots'],
@@ -42,7 +44,12 @@ export default function ScheduleGrid() {
       });
     },
     onError: (err) => {
-      alert(err.response?.data?.message || 'Failed to add availability');
+      setStatusModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: err.response?.data?.message || 'Failed to add availability'
+      });
     }
   });
 
@@ -57,7 +64,12 @@ export default function ScheduleGrid() {
       queryClient.invalidateQueries(['advocateSlots']);
     },
     onError: (err) => {
-      alert(err.response?.data?.message || 'Failed to delete slot');
+      setStatusModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: err.response?.data?.message || 'Failed to delete slot'
+      });
     }
   });
 
@@ -164,6 +176,14 @@ export default function ScheduleGrid() {
           </div>
         )}
       </div>
+
+      <StatusModal 
+        isOpen={statusModal.isOpen}
+        type={statusModal.type}
+        title={statusModal.title}
+        message={statusModal.message}
+        onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+      />
     </div>
   );
 }

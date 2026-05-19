@@ -11,10 +11,12 @@ import {
   Loader2,
   ExternalLink 
 } from 'lucide-react';
+import StatusModal from './StatusModal';
 
 export default function AppointmentList() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState('Pending'); // Matches our new Backend Enums
+  const [statusModal, setStatusModal] = useState({ isOpen: false, type: '', title: '', message: '', defaultValue: '', onConfirm: null });
 
   // 1. Fetch Appointments based on current tab
   const { data: appointments, isLoading } = useQuery({
@@ -45,14 +47,30 @@ export default function AppointmentList() {
 
   const handleAction = (id, action) => {
     if (action === 'Accepted') {
-      const link = prompt("Enter the Meeting Link (e.g., Google Meet/Zoom):", "https://meet.google.com/");
-      if (link) {
-        statusMutation.mutate({ id, status: 'Accepted', meetingLink: link });
-      }
+      setStatusModal({
+        isOpen: true,
+        type: 'prompt',
+        title: 'Meeting Link',
+        message: 'Enter the Meeting Link (e.g., Google Meet/Zoom):',
+        defaultValue: 'https://meet.google.com/',
+        onConfirm: (link) => {
+          setStatusModal({ ...statusModal, isOpen: false });
+          if (link) {
+            statusMutation.mutate({ id, status: 'Accepted', meetingLink: link });
+          }
+        }
+      });
     } else {
-      if (window.confirm("Are you sure you want to reject this request?")) {
-        statusMutation.mutate({ id, status: 'Rejected' });
-      }
+      setStatusModal({
+        isOpen: true,
+        type: 'confirm-reject',
+        title: 'Reject Request',
+        message: 'Are you sure you want to reject this request?',
+        onConfirm: () => {
+          setStatusModal({ ...statusModal, isOpen: false });
+          statusMutation.mutate({ id, status: 'Rejected' });
+        }
+      });
     }
   };
 
@@ -170,6 +188,16 @@ export default function AppointmentList() {
           )}
         </div>
       </div>
+
+      <StatusModal 
+        isOpen={statusModal.isOpen}
+        type={statusModal.type}
+        title={statusModal.title}
+        message={statusModal.message}
+        defaultValue={statusModal.defaultValue}
+        onConfirm={statusModal.onConfirm}
+        onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+      />
     </div>
   );
 }

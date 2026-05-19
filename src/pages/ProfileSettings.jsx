@@ -6,12 +6,14 @@ import {
   Settings, Palette, DollarSign, Star, 
   Loader2, CheckCircle, Moon, Sun, Monitor, Type
 } from 'lucide-react';
+import StatusModal from '../components/StatusModal';
 
 export default function ProfileSettings() {
   const queryClient = useQueryClient();
   const [feeInput, setFeeInput] = useState('');
   const [showFeeSuccess, setShowFeeSuccess] = useState(false);
   const [currentTheme, setCurrentTheme] = useState('default');
+  const [statusModal, setStatusModal] = useState({ isOpen: false, type: '', title: '', message: '' });
 
   // Fetch Profile (for read-only summary & ratings)
   const { data: profile, isLoading: isProfileLoading } = useQuery({
@@ -79,7 +81,12 @@ export default function ProfileSettings() {
       setTimeout(() => setShowFeeSuccess(false), 3000);
     },
     onError: (err) => {
-      alert(err.response?.data?.message || 'Failed to update fees');
+      setStatusModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Update Failed',
+        message: err.response?.data?.message || 'Failed to update fees'
+      });
     }
   });
 
@@ -262,6 +269,14 @@ export default function ProfileSettings() {
         </div>
 
       </div>
+
+      <StatusModal 
+        isOpen={statusModal.isOpen}
+        type={statusModal.type}
+        title={statusModal.title}
+        message={statusModal.message}
+        onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+      />
     </Layout>
   );
 }

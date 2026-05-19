@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Shield, Loader2, Landmark, Briefcase } from 'lucide-react';
+import StatusModal from '../components/StatusModal';
 
 export default function Register() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState([]);
   const [fetchingCategories, setFetchingCategories] = useState(true);
+  const [statusModal, setStatusModal] = useState({ isOpen: false, type: '', title: '', message: '' });
 
   // Updated state to match the exact signup API payload
   const [formData, setFormData] = useState({
@@ -57,11 +59,20 @@ export default function Register() {
         localStorage.setItem('authToken', res.data.token);
 
         // Show success message with the newly generated Advocate ID
-        alert(`Registration Successful! Welcome, your Advocate ID is ${res.data.data.advId}`);
-        navigate('/'); // Redirect to dashboard or login
+        setStatusModal({
+          isOpen: true,
+          type: 'success',
+          title: 'Registration Successful!',
+          message: `Welcome, your Advocate ID is ${res.data.data.advId}`
+        });
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Registration Failed");
+      setStatusModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Registration Failed',
+        message: err.response?.data?.message || "Something went wrong."
+      });
     } finally {
       setLoading(false);
     }
@@ -231,6 +242,19 @@ export default function Register() {
           </form>
         </div>
       </div>
+      
+      <StatusModal 
+        isOpen={statusModal.isOpen}
+        type={statusModal.type}
+        title={statusModal.title}
+        message={statusModal.message}
+        onClose={() => {
+          setStatusModal({ ...statusModal, isOpen: false });
+          if (statusModal.type === 'success') {
+            navigate('/');
+          }
+        }}
+      />
     </div>
   );
 }

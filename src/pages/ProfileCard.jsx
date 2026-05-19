@@ -6,6 +6,7 @@ import {
   Mail, Phone, MapPin, 
   Download, Share2, Edit3, Loader2, CheckCircle, Camera
 } from 'lucide-react';
+import StatusModal from '../components/StatusModal';
 
 export default function ProfileCard() {
   const queryClient = useQueryClient();
@@ -22,6 +23,7 @@ export default function ProfileCard() {
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
+  const [statusModal, setStatusModal] = useState({ isOpen: false, type: '', title: '', message: '' });
 
   // 1. Fetch Profile
   const { data: profile, isLoading: isProfileLoading } = useQuery({
@@ -74,7 +76,12 @@ export default function ProfileCard() {
       setTimeout(() => setShowSuccess(false), 3000);
     },
     onError: (err) => {
-      alert(err.response?.data?.message || 'Failed to update profile');
+      setStatusModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Update Failed',
+        message: err.response?.data?.message || 'Failed to update profile'
+      });
     }
   });
 
@@ -96,7 +103,12 @@ export default function ProfileCard() {
       queryClient.invalidateQueries(['advocateProfile']);
     },
     onError: (err) => {
-      alert(err.response?.data?.message || 'Failed to upload photo');
+      setStatusModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Upload Failed',
+        message: err.response?.data?.message || 'Failed to upload photo'
+      });
     }
   });
 
@@ -319,6 +331,14 @@ export default function ProfileCard() {
           </div>
         </div>
       </div>
+      
+      <StatusModal 
+        isOpen={statusModal.isOpen}
+        type={statusModal.type}
+        title={statusModal.title}
+        message={statusModal.message}
+        onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+      />
     </Layout>
   );
 }

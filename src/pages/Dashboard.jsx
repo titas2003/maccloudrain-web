@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 import UpcomingAppointments from '../components/UpcomingAppointments';
 import AppointmentRequests from '../components/AppointmentRequests';
 import { Bell, ChevronDown, Clock, LogOut, CheckCircle, Loader2, UploadCloud, AlertCircle, Eye, Calendar, XCircle, IndianRupee } from 'lucide-react';
+import StatusModal from '../components/StatusModal';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -101,6 +102,8 @@ export default function Dashboard() {
     video: 'idle'
   });
 
+  const [statusModal, setStatusModal] = useState({ isOpen: false, type: '', title: '', message: '' });
+
   // --- 4. Upload / Update Handler ---
   const handleVerificationUpload = async (type, e) => {
     e.preventDefault();
@@ -158,7 +161,12 @@ export default function Dashboard() {
       setTimeout(() => setStatuses(prev => ({ ...prev, [type]: 'idle' })), 3000);
 
     } catch (err) {
-      alert(err.message || err.response?.data?.message || `Failed to update ${type}`);
+      setStatusModal({
+        isOpen: true,
+        type: 'error',
+        title: `Failed to update ${type}`,
+        message: err.message || err.response?.data?.message || "Something went wrong."
+      });
       setStatuses(prev => ({ ...prev, [type]: 'error' }));
     }
   };
@@ -470,6 +478,13 @@ export default function Dashboard() {
 
         </div>
       </Layout>
+      <StatusModal 
+        isOpen={statusModal.isOpen}
+        type={statusModal.type}
+        title={statusModal.title}
+        message={statusModal.message}
+        onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+      />
     </>
   );
 }

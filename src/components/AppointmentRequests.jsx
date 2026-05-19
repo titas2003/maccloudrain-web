@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Calendar, Clock, User, CheckCircle, XCircle, MapPin, Video, Loader2 } from 'lucide-react';
+import StatusModal from './StatusModal';
 
 export default function AppointmentRequests({ limit, isGlanceView = false }) {
     const queryClient = useQueryClient();
@@ -296,71 +297,14 @@ export default function AppointmentRequests({ limit, isGlanceView = false }) {
             )}
 
             {/* --- STATUS MODAL (Success/Error/Loading/Confirm) --- */}
-            {statusModal.isOpen && (
-                <div className="fixed inset-0 z-[200] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 flex flex-col items-center text-center relative overflow-hidden">
-                        
-                        {/* Dynamic Icon */}
-                        {statusModal.type === 'loading' && (
-                            <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4">
-                                <Loader2 size={32} className="animate-spin" />
-                            </div>
-                        )}
-                        {statusModal.type === 'success' && (
-                            <div className="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center mb-4">
-                                <CheckCircle size={32} />
-                            </div>
-                        )}
-                        {statusModal.type === 'error' && (
-                            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
-                                <XCircle size={32} />
-                            </div>
-                        )}
-                        {statusModal.type === 'confirm-reject' && (
-                            <div className="w-16 h-16 bg-orange-50 text-orange-500 rounded-full flex items-center justify-center mb-4">
-                                <XCircle size={32} />
-                            </div>
-                        )}
-
-                        <h3 className="text-xl font-black text-slate-800 mb-2">{statusModal.title}</h3>
-                        <p className="text-sm text-slate-500 mb-6">{statusModal.message}</p>
-
-                        {/* Loading Progress Bar */}
-                        {statusModal.type === 'loading' && (
-                            <div className="w-full bg-slate-100 rounded-full h-1.5 mb-2 overflow-hidden">
-                                <div className="bg-blue-500 h-1.5 rounded-full w-full animate-pulse"></div>
-                            </div>
-                        )}
-
-                        {/* Action Buttons */}
-                        {statusModal.type === 'confirm-reject' && (
-                            <div className="flex gap-3 w-full">
-                                <button
-                                    onClick={() => setStatusModal({ ...statusModal, isOpen: false })}
-                                    className="flex-1 py-3 rounded-xl font-bold text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={statusModal.onConfirm}
-                                    className="flex-1 py-3 rounded-xl font-bold text-sm bg-red-500 text-white hover:bg-red-600 transition-colors"
-                                >
-                                    Decline Request
-                                </button>
-                            </div>
-                        )}
-
-                        {(statusModal.type === 'success' || statusModal.type === 'error') && (
-                            <button
-                                onClick={() => setStatusModal({ ...statusModal, isOpen: false })}
-                                className="w-full py-3 rounded-xl font-bold text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
-                            >
-                                Close
-                            </button>
-                        )}
-                    </div>
-                </div>
-            )}
+            <StatusModal 
+                isOpen={statusModal.isOpen}
+                type={statusModal.type}
+                title={statusModal.title}
+                message={statusModal.message}
+                onConfirm={statusModal.onConfirm}
+                onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+            />
         </div>
     );
 }
