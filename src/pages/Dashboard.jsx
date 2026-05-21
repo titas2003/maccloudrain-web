@@ -418,9 +418,14 @@ export default function Dashboard() {
             <div className="flex items-center gap-3 cursor-pointer group">
               <div className="relative">
                 <img
-                  src={profile?.profileImage || "https://i.imgur.com/8Km9tLL.png"}
+                  src={
+                    profile?.photo
+                      ? `http://localhost:5006/${profile.photo.replace(/\\/g, '/')}`
+                      : 'https://i.pravatar.cc/150?img=12'
+                  }
                   alt="Profile"
                   className="w-9 h-9 rounded-full object-cover border border-slate-200"
+                  onError={e => { e.target.src = 'https://i.pravatar.cc/150?img=12'; }}
                 />
                 {!isProfileLoading && (
                   <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-white ${vStatus === 'verified' ? 'bg-green-500' : 'bg-red-500'}`} title={vStatus === 'verified' ? 'Active' : 'Action Required'}></span>
